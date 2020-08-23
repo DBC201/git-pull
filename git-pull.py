@@ -74,7 +74,6 @@ def main(argv):
             if not pull(f):
                 initialize_repo(f)
                 remote_origin_add(f)
-                if args.p
                 if not pull(f): # attempts to pull again after initializing and adding remote origin, removes the remote origin if failed
                     remote_origin_remove(f)
             if args.push:              

@@ -128,10 +128,6 @@ def options():
                 repo_folder = ''
                 with open(f, "r") as file:
                     content = file.read()
-                    if not push and content.find("-p") == -1:
-                        continue
-                    elif push and content.find("-p") != -1:
-                        continue
                     index = content.find('-d')
                     repo_folder = content[index+2:]
                     repo_folder = repo_folder.strip(" \"")
@@ -147,7 +143,8 @@ def options():
 
 
 def check_startup():
-    return "run-git-pull.bat" in os.listdir("C:\\Users\\DBC\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup")
+    user = os.path.expanduser("~")
+    return "run-git-pull.bat" in os.listdir(os.path.join(user, "AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup"))
 
 def check_documents():
     user = os.path.expanduser("~")
@@ -184,7 +181,7 @@ def install(repo_folder, startup):
         if startup:
             try:
                 create_bat_file(
-                    os.path.join("C:\\Users\\DBC\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup"), 
+                    os.path.join(user, "AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup"), 
                     repo_folder
                 )
             except Exception as e:
@@ -206,7 +203,9 @@ if __name__ == "__main__":
     elif check_startup():
         print("Installation in startup found but not in documents")
         print("Perhaps you would like to check it out?")
-        os.system("explorer.exe \"C:\\Users\\DBC\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\"")
+        user = os.path.expanduser("~")
+        startup_folder = os.path.join(user, "AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup")
+        os.system(f"explorer.exe \"{startup_folder}\"")
     else:
         repo_folder = get_repo_folder()
         startup = yes_no_selection("Would you like to have this program run on startup")
