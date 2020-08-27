@@ -1,7 +1,7 @@
 import os
 import shutil
-from sys import exit
 
+from sys import exit
 
 def write_location(location):
     user = os.path.expanduser("~")
@@ -36,10 +36,10 @@ def remove_location(location):
 
 def confirm_selection():
     while True:
-        selection = input("Type confirm to confirm, return to change:").lower()
+        selection = input("Type confirm to confirm, cancel to change:").lower()
         if selection == "confirm":
             return True
-        elif selection == "return":
+        elif selection == "cancel":
             return False
 
 
@@ -66,6 +66,22 @@ def get_repo_folder():
             if confirm_selection():
                 return repo_folder
 
+def uninstall():
+    user = os.path.expanduser("~")
+    try:
+        for f in return_locations():
+            try:
+                os.remove(f)
+            except Exception as e:
+                print(e)
+        shutil.rmtree(os.path.join(user, "Documents\git-pull"))
+    except Exception as e:
+        print(e)
+        print("Error deleting files")
+    else:
+        print("Succesfully uninstalled!")
+        exit()
+
 
 def options():
     menu = """
@@ -81,19 +97,7 @@ def options():
         selection = input().lower()
         user = os.path.expanduser("~")
         if selection == 'u':
-            try:
-                for f in return_locations():
-                    try:
-                        os.remove(f)
-                    except Exception as e:
-                        print(e)
-                shutil.rmtree(os.path.join(user, "Documents\git-pull"))
-            except Exception as e:
-                print(e)
-                print("Error deleting files")
-            else:
-                print("Succesfully uninstalled!")
-                exit()
+            uninstall()
         elif selection == 'r':
             new_location = get_repo_folder()
             for f in return_locations():
@@ -133,11 +137,12 @@ def options():
             print("This will change the arguments for all found .bat files")
             push = yes_no_selection("Would you like to auto push after each pull?")
             reset = yes_no_selection("Would you like to hard reset master before each pull(local will be lost)")
-            arguments = ''
+            arguments = []
             if push:
-                arguments += '-p'
+                arguments.append('-p')
             if reset:
-                arguments += '-r'
+                arguments.append('-r')
+            arguments = ' '.join(arguments)
             for f in return_locations():
                 repo_folder = ''
                 with open(f, "r") as file:
@@ -179,37 +184,19 @@ cmd /k \"python \"{script_path}\" {arguments} {path_argument} \""""
         write_location(os.path.join(bat_location, "run-git-pull.bat"))
 
 
-def check_update(link="https://github.com/DBC201/git-pull.git"):
-    install_folder = os.path.join(
-        os.path.expanduser("~"),
-        "Documents",
-        "git-pull"
-    )
-    import git_pull
-    if not git_pull.pull(install_folder):
-        git_pull.initialize_repo(install_folder)
-        os.system(f"git -C \"{install_folder}\" reset origin/master --hard")
-        os.system(f"git -C \"{install_folder}\" remote add origin {link}")
-        pull_output = os.popen(f"git -C \"{install_folder}\" pull origin master").read()
-        if "fatal" in pull_output:
-            print("Unable to check for update")
-        elif "Already up to date." in pull_output:
-            print("You have the latest version")
-        else:
-            print("Update successful!")
-
-
 def install(repo_folder, startup):
     user = os.path.expanduser("~")
     install_folder = os.path.join(user, "Documents\git-pull")
     try:
         os.mkdir(install_folder)
-        current_files = os.listdir(os.getcwd())
-        for file in current_files:
-            shutil.copy2(
-                os.path.join(os.getcwd(), file),
-                install_folder
-            )
+        shutil.copy2(
+            os.path.join(os.getcwd(), "git_pull.py"),
+            install_folder
+        )
+        shutil.copy2(
+            os.path.join(os.getcwd(), "install.py"),
+            install_folder
+        )
         create_bat_file(install_folder, repo_folder)
         create_bat_file(os.path.join(user, "Desktop"), repo_folder)
         if startup:
@@ -233,7 +220,6 @@ if __name__ == "__main__":
     print("git-pull by dbc201")
     print("Press CTRL+C to halt")
     if check_documents():
-        check_update()
         options()
     elif check_startup():
         print("Installation in startup found but not in documents")
